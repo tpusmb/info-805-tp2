@@ -118,3 +118,4 @@ tensorboard/
 
 # trained models
 trained_models/**
+

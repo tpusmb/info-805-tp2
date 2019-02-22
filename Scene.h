@@ -14,84 +14,91 @@
 /// Namespace RayTracer
 namespace rt {
 
-  /**
-  Models a scene, i.e. a collection of lights and graphical objects
-  (could be a tree, but we keep a list for now for the sake of
-  simplicity).
+    /**
+    Models a scene, i.e. a collection of lights and graphical objects
+    (could be a tree, but we keep a list for now for the sake of
+    simplicity).
 
-  @note Once the scene receives a new object, it owns the object and
-  is thus responsible for its deallocation.
-  */
+    @note Once the scene receives a new object, it owns the object and
+    is thus responsible for its deallocation.
+    */
 
-  struct Scene {
-    /// The list of lights modelled as a vector.
-    std::vector< Light* > myLights;
-    /// The list of objects modelled as a vector.
-    std::vector< GraphicalObject* > myObjects;
+    struct Scene {
+        /// The list of lights modelled as a vector.
+        std::vector<Light *> myLights;
+        /// The list of objects modelled as a vector.
+        std::vector<GraphicalObject *> myObjects;
 
-    /// Default constructor. Nothing to do.
-    Scene() {}
+        /// Default constructor. Nothing to do.
+        Scene() {}
 
-    /// Destructor. Frees objects.
-    ~Scene() 
-    {
-      for ( Light* light : myLights )
-        delete light;
-      for ( GraphicalObject* obj : myObjects )
-        delete obj;
-      // The vector is automatically deleted.
-    }
+        /// Destructor. Frees objects.
+        ~Scene() {
+            for (Light *light : myLights)
+                delete light;
+            for (GraphicalObject *obj : myObjects)
+                delete obj;
+            // The vector is automatically deleted.
+        }
 
-    /// This function calls the init method of each of its objects.
-    void init( Viewer& viewer )
-    {
-      for ( GraphicalObject* obj : myObjects )
-        obj->init( viewer );
-      for ( Light* light : myLights )
-        light->init( viewer );
-    }
-    /// This function calls the draw method of each of its objects.
-    void draw( Viewer& viewer )
-    {
-      for ( GraphicalObject* obj : myObjects )
-        obj->draw( viewer );
-      for ( Light* light : myLights )
-        light->draw( viewer );
-    }
-    /// This function calls the light method of each of its lights
-    void light(Viewer& viewer )
-    {
-      for ( Light* light : myLights )
-        light->light( viewer );
-    }
+        /// This function calls the init method of each of its objects.
+        void init(Viewer &viewer) {
+            for (GraphicalObject *obj : myObjects)
+                obj->init(viewer);
+            for (Light *light : myLights)
+                light->init(viewer);
+        }
 
-    /// Adds a new object to the scene.
-    void addObject( GraphicalObject* anObject )
-    {
-      myObjects.push_back( anObject );
-    }
+        /// This function calls the draw method of each of its objects.
+        void draw(Viewer &viewer) {
+            for (GraphicalObject *obj : myObjects)
+                obj->draw(viewer);
+            for (Light *light : myLights)
+                light->draw(viewer);
+        }
 
-    /// Adds a new light to the scene.
-    void addLight( Light* aLight )
-    {
-      myLights.push_back( aLight );
-    }
-    
-    /// returns the closest object intersected by the given ray.
-    Real
-    rayIntersection( const Ray& ray,
-                     GraphicalObject*& object, Point3& p )
-    {
-      object = 0;
-      return 1.0f;
-    }
+        /// This function calls the light method of each of its lights
+        void light(Viewer &viewer) {
+            for (Light *light : myLights)
+                light->light(viewer);
+        }
 
-  private:
-    /// Copy constructor is forbidden.
-    Scene( const Scene& ) = delete;
-    /// Assigment is forbidden.
-    Scene& operator=( const Scene& ) = delete;
-  };
+        /// Adds a new object to the scene.
+        void addObject(GraphicalObject *anObject) {
+            myObjects.push_back(anObject);
+        }
+
+        /// Adds a new light to the scene.
+        void addLight(Light *aLight) {
+            myLights.push_back(aLight);
+        }
+
+        /// returns the closest object intersected by the given ray.
+        Real
+        rayIntersection(const Ray &ray,
+                        GraphicalObject *&object, Point3 &p) {
+            Real distance_min;
+            object = 0;
+            for (int i = 0; i < myObjects.size(); i++) {
+
+                if (myObjects[i]->rayIntersection(ray, p)) {
+                    if (i == 0 || distance(ray.origin, p) < distance_min) {
+                        object = myObjects[i];
+                        distance_min = distance(ray.origin, p);
+                    }
+                }
+            }
+            if (object == 0) return 1.0f;
+            else return -1.0f;
+        }
+
+    private:
+        /// Copy constructor is forbidden.
+        Scene(const Scene &) = delete;
+
+        /// Assigment is forbidden.
+        Scene &operator=(const Scene &) = delete;
+    };
 
 } // namespace rt
 

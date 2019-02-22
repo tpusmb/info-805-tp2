@@ -78,7 +78,7 @@ rt::Viewer::keyPressEvent(QKeyEvent *e)
       else if ( modifiers == Qt::NoModifier ) { w /= 8; h /= 8; }
       Image2D<Color> image( w, h );
       renderer.setResolution( image.w(), image.h() );
-     renderer.render( image, maxDepth );
+      renderer.render( image, maxDepth );
       ofstream output( "output.ppm" );
       Image2DWriter<Color>::write( image, output, true );
       output.close();
