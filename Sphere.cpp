@@ -81,29 +81,31 @@ rt::Sphere::getMaterial(Point3 /* p */) {
 }
 
 rt::Real
-rt::Sphere::rayIntersection(const Ray &ray, Point3 &res) {
+rt::Sphere::rayIntersection(const Ray &ray, Point3 &t0) {
 
-    Vector3 w = ray.direction;
-    Point3 p = ray.origin;
-    Vector3 pa = Vector3(center[0] - p[0], center[1] - p[1], center[2] - p[2]);
-    Vector3 pq = (pa.dot(w)) * w;
-    Vector3 qa = pa - pq;
-    if (qa.norm() * qa.norm() > radius * radius) {
-        return 1.0f;
+    Vector3 L = center - ray.origin;
+    Real a = ray.direction.dot(ray.direction);
+    Real b = 2 * ray.direction.dot(L);
+    Real c = L.dot(L) - radius * radius;
+    Real t1;
 
-    } else {
+    Real discr = b * b - 4 * a * c;
 
-        Real delta = 4 * pow((w.dot(p - center)), 2.0) - 4 * pow(((p - center).norm() * (p - center).norm() - pow(radius, 2)), 2);
-        Real t1 = -((2 * w.dot(p - center) - sqrt(delta)) * 0.5);
-        Real t2 = -((2 * w.dot(p - center) + sqrt(delta)) * 0.5);
-        Real t;
-        if (t1 >= 0 && t2 >= 0)
-            t = t1;
-        else if (t1 < 0 && t2 > 0)
-            t = t2;
-        else
-            return 1.0f;
-        res = p + t * w;
+    // Pas intersection
+    if (discr < 0) return 1.0f;
+
+    else if (discr == 0) t0 = t1 = -0.5 * b / a;
+    else {
+        Real q = (b > 0) ?
+                 -0.5 * (b + sqrt(discr)) :
+                 -0.5 * (b - sqrt(discr));
+        t0 = q / a;
+        t1 = c / q;
+    }
+    if (t0 > t1) std::swap(t0, t1);
+    if (t0 < 0) {
+        t0 = t1; // if t0 is negative, let's use t1 instead
+        if (t0 < 0) return 1.0f; // both t0 and t1 are negative
     }
     return -1.0f;
 }

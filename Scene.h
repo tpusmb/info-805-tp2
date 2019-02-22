@@ -82,9 +82,10 @@ namespace rt {
             for (int i = 0; i < myObjects.size(); i++) {
 
                 if (myObjects[i]->rayIntersection(ray, p)) {
-                    if (i == 0 || distance(ray.origin, p) < distance_min) {
+                    std::cout << "dist " << rt::distance(ray.origin, p) << std::endl;
+                    if (i == 0 || rt::distance(ray.origin, p) < distance_min) {
                         object = myObjects[i];
-                        distance_min = distance(ray.origin, p);
+                        distance_min = rt::distance(ray.origin, p);
                     }
                 }
             }
