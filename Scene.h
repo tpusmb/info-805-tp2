@@ -74,23 +74,24 @@ namespace rt {
         }
 
         /// returns the closest object intersected by the given ray.
-        Real
-        rayIntersection(const Ray &ray,
-                        GraphicalObject *&object, Point3 &p) {
-            Real distance_min;
-            object = 0;
-            for (int i = 0; i < myObjects.size(); i++) {
-
-                if (myObjects[i]->rayIntersection(ray, p)) {
-                    std::cout << "dist " << rt::distance(ray.origin, p) << std::endl;
-                    if (i == 0 || rt::distance(ray.origin, p) < distance_min) {
-                        object = myObjects[i];
-                        distance_min = rt::distance(ray.origin, p);
+        Real rayIntersection(const Ray &ray, GraphicalObject *&object, Point3 &p) {
+            Point3 pointTemp;
+            Real distance = 0;
+            bool first_intersection = false;
+            for (auto &object_in_list : this->myObjects) {
+                if (object_in_list->rayIntersection(ray, pointTemp) <= 0) {
+                    // get the distance between the ray origin and the intersection point
+                    Real distanceTemp = rt::distance(ray.origin, pointTemp);
+                    if (distanceTemp < distance || !first_intersection) {
+                        distance = distanceTemp;
+                        object = object_in_list;
+                        p = pointTemp;
+                        first_intersection = true;
                     }
                 }
             }
-            if (object == 0) return 1.0f;
-            else return -1.0f;
+
+            return first_intersection ? -distance : distance;
         }
 
     private:

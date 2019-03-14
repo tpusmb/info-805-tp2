@@ -81,31 +81,42 @@ rt::Sphere::getMaterial(Point3 /* p */) {
 }
 
 rt::Real
-rt::Sphere::rayIntersection(const Ray &ray, Point3 &t0) {
+rt::Sphere::rayIntersection(const Ray &ray, Point3 &p) {
+    Vector3 center_direction = ray.origin - center;
+    Vector3 center_closest_point = (center_direction) - (center_direction).dot(ray.direction) * ray.direction;
+    Real distance_centre_pow_2 = center_closest_point.dot(center_closest_point);
+    Real sphere_distance = distance_centre_pow_2 - radius * radius;
 
-    Vector3 L = center - ray.origin;
-    Real a = ray.direction.dot(ray.direction);
-    Real b = 2 * ray.direction.dot(L);
-    Real c = L.dot(L) - radius * radius;
-    Real t1;
+    // if there is a intersection 
+    if (sphere_distance <= 0) {
+        // Solve equation
+        Real delta = 4 * (ray.direction.dot(center_direction) * ray.direction.dot(center_direction)) -
+                     4 * ((center_direction).dot(center_direction) - radius * radius);
+        // get the tow solutions
+        Real solution1 = (-2 * ray.direction.dot(center_direction) - (float) sqrt(delta)) / 2;
+        Real solution2 = (-2 * ray.direction.dot(center_direction) + (float) sqrt(delta)) / 2;
 
-    Real discr = b * b - 4 * a * c;
+        // Closes intersection 
+        Real solution;
+        // case 1: The object in front of the ray
+        if (solution1 >= 0 && solution2 >= 0) {
+            // get closes solution
+            solution = std::min(solution1, solution2);
+            // cse 2: Object back from the ray (no intersection)
+        } else if (solution1 < 0 && solution2 < 0) {
+            sphere_distance = -sphere_distance;
+            // The closes point is the ray origin
+            solution = 0;
+            // case 3: 2 different signed. The rays are in the ball
+        } else {
+            // We get the closes one
+            solution = std::max(solution1, solution2);
+        }
+        // get the intersection point
+        p = ray.origin + solution * ray.direction;
 
-    // Pas intersection
-    if (discr < 0) return 1.0f;
-
-    else if (discr == 0) t0 = t1 = -0.5 * b / a;
-    else {
-        Real q = (b > 0) ?
-                 -0.5 * (b + sqrt(discr)) :
-                 -0.5 * (b - sqrt(discr));
-        t0 = q / a;
-        t1 = c / q;
+    } else {
+        p = center - center_closest_point;
     }
-    if (t0 > t1) std::swap(t0, t1);
-    if (t0 < 0) {
-        t0 = t1; // if t0 is negative, let's use t1 instead
-        if (t0 < 0) return 1.0f; // both t0 and t1 are negative
-    }
-    return -1.0f;
+    return sphere_distance;
 }
