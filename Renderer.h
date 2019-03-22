@@ -167,19 +167,22 @@ namespace rt {
             Real ri = ptrScene->rayIntersection(ray, obj_i, p_i);
             // Nothing was intersected
             if (ri >= 0.0f) return background(ray); // some background color
-            if (ray.depth > 0 && obj_i->getMaterial(p_i).coef_reflexion != 0){
+            if (ray.depth > 0 && obj_i->getMaterial(p_i).coef_reflexion != 0) {
                 Ray ray_reflect(ray.origin, reflect(ray.direction, obj_i->getNormal(p_i)));
                 ray_reflect.depth--;
                 Color color_reflect = trace(ray_reflect);
                 result += color_reflect * obj_i->getMaterial(p_i).specular * obj_i->getMaterial(p_i).coef_reflexion;
             }
-            if (ray.depth > 0 && obj_i->getMaterial(p_i).coef_refraction != 0){
+            if (ray.depth > 0 && obj_i->getMaterial(p_i).coef_refraction != 0) {
                 Ray ray_refract = refractionRay(ray, p_i, obj_i->getNormal(p_i), obj_i->getMaterial(p_i));
                 ray_refract.depth--;
                 Color color_refract = trace(ray_refract);
-                result += color_refract * obj_i->getMaterial(p_i).specular * obj_i->getMaterial(p_i).coef_refraction;
+                result += color_refract * obj_i->getMaterial(p_i).diffuse * obj_i->getMaterial(p_i).coef_refraction;
             }
-            result += illumination(ray, obj_i, p_i);
+            if(ray.depth > 0)
+                result += illumination(ray, obj_i, p_i) * obj_i->getMaterial(p_i).coef_diffusion;
+            else
+                result += illumination(ray, obj_i, p_i);
             return result;
         }
 
@@ -216,17 +219,32 @@ namespace rt {
         }
 
         /// Calcule le rayon réfracté
-        Ray refractionRay( const Ray& aRay, const Point3& p, Vector3 N, const Material& m ){
-            Real r;
-            Real c = - N.dot(aRay.direction);
-            if(N.dot(aRay.direction) >= 0){
+        Ray refractionRay(const Ray &aRay, const Point3 &p, Vector3 N, const Material &m) {
+            Real tmp;
+            Real r = m.in_refractive_index / m.out_refractive_index;
+            Real c = (-1.0f) * N.dot(aRay.direction);
+            //When the ray is inside the object and go out
+
+            if (aRay.direction.dot(N) <= 0) {
                 r = m.out_refractive_index / m.in_refractive_index;
-                N = Vector3(-N[0], -N[1], -N[2]);
             }
-            else{
-                r = m.in_refractive_index / m.out_refractive_index;
+            Real alpha = 1 - (r * r) * (1 - (c * c));
+            if (c > 0)
+                tmp = r * c - sqrt(alpha);
+            else {
+                tmp = r * c + sqrt(alpha);
             }
-            return Ray(p, r * aRay.direction + ((r * c)  - sqrt(1 - (r * r) * (1 - (c * c)))) * N);
+
+            Vector3 vRefrac = Vector3(r * aRay.direction + tmp * N);
+
+            //Total reflexion
+            if (alpha < 0) {
+                vRefrac = reflect(aRay.direction, N);
+            }
+
+            Ray newRay = Ray(p + vRefrac * 0.01f, vRefrac, aRay.depth - 1);
+
+            return newRay;
         }
 
         /// Calcule la couleur de la lumière (donnée par light_color) dans la

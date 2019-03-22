@@ -89,7 +89,7 @@ rt::Viewer::keyPressEvent(QKeyEvent *e)
       if ( modifiers == Qt::ShiftModifier )
         { maxDepth = std::max( 1, maxDepth - 1 ); handled = true; }
       if ( modifiers == Qt::NoModifier )
-        { maxDepth = std::min( 20, maxDepth + 1 ); handled = true; }
+        { maxDepth = std::min( 23, maxDepth + 1 ); handled = true; }
       std::cout << "Max depth is " << maxDepth << std::endl; 
     }
     
